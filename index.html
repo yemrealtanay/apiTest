@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>ReserveIt • API Test UI (Vanilla JS)</title>
+    <style>
+        :root{--bg:#0f1115;--fg:#e6e6e6;--muted:#9aa0a6;--card:#151923;--acc:#5eead4;--danger:#ef4444;}
+        *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 ui-sans-serif,system-ui,Segoe UI,Roboto,Arial}
+        .wrap{max-width:1000px;margin:24px auto;padding:16px}
+        h1{font-size:18px;margin:0 0 12px} h2{font-size:15px;margin:18px 0 8px;color:var(--muted)}
+        .row{display:flex;gap:12px;flex-wrap:wrap}
+        .card{background:var(--card);border:1px solid #22283a;border-radius:14px;padding:14px;flex:1}
+        .card.sm{flex:0 0 320px} .card.md{flex:1 1 460px}
+        label{display:block;margin:6px 0 6px;color:#cbd5e1;font-size:12px}
+        input,select,textarea{width:100%;background:#0b0e14;color:var(--fg);border:1px solid #293245;border-radius:10px;padding:10px}
+        textarea{min-height:120px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+        .btn{appearance:none;border:1px solid #2b3447;background:#0b0e14;color:var(--fg);padding:9px 12px;border-radius:10px;cursor:pointer}
+        .btn.primary{border-color:#1e293b;background:#122033;color:#d1f7ef}
+        .btn.red{border-color:#3b1e1e;background:#1a0f0f;color:#ffdcdc}
+        .btn.ghost{background:transparent}
+        .row .btn{margin-top:8px}
+        .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        .muted{color:var(--muted);font-size:12px}
+        pre{background:#0b0e14;border:1px solid #293245;border-radius:10px;padding:12px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+        .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#0b0e14;border:1px solid #293245;font-size:11px;color:#cbd5e1;margin-right:6px}
+        .ok{color:#10b981} .bad{color:var(--danger)}
+        .row-right{display:flex;gap:8px;align-items:center;justify-content:flex-end}
+        .inline{display:inline-flex;gap:8px;align-items:center}
+        .hr{height:1px;background:#232a3a;margin:12px -14px}
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <h1>ReserveIt • API Test UI <span class="pill" id="statusPill">disconnected</span></h1>
+
+    <div class="row">
+        <div class="card sm">
+            <label>API Base URL</label>
+            <input id="baseUrl" placeholder="http://127.0.0.1:8000" />
+            <div class="row" style="gap:8px">
+                <button class="btn" id="saveBase">Kaydet</button>
+                <button class="btn ghost" id="pingBtn">Ping</button>
+            </div>
+            <div class="hr"></div>
+            <label>Bearer Token (otomatik dolar)</label>
+            <textarea id="token" placeholder="Login sonrası otomatik kaydedilir"></textarea>
+            <div class="row" style="gap:8px">
+                <button class="btn" id="saveToken">Token Kaydet</button>
+                <button class="btn red" id="clearToken">Token Temizle</button>
+            </div>
+            <p class="muted" id="pingResult"></p>
+        </div>
+
+        <div class="card md">
+            <h2>Login</h2>
+            <div class="grid2">
+                <div>
+                    <label>E-posta</label>
+                    <input id="loginEmail" placeholder="test@example.com"/>
+                </div>
+                <div>
+                    <label>Şifre</label>
+                    <input id="loginPass" type="password" placeholder="password"/>
+                </div>
+            </div>
+            <div class="row">
+                <button class="btn primary" id="loginBtn">Giriş Yap</button>
+                <button class="btn" id="meBtn">/api/me</button>
+                <button class="btn red" id="logoutBtn">Çıkış</button>
+            </div>
+            <pre id="authOut"></pre>
+        </div>
+
+        <div class="card md">
+            <h2>Register</h2>
+            <div class="grid2">
+                <div>
+                    <label>İsim</label>
+                    <input id="regName" placeholder="Test User"/>
+                </div>
+                <div>
+                    <label>E-posta</label>
+                    <input id="regEmail" placeholder="new@example.com"/>
+                </div>
+            </div>
+            <div class="grid2">
+                <div>
+                    <label>Şifre</label>
+                    <input id="regPass" type="password" placeholder="password"/>
+                </div>
+                <div>
+                    <label>Şifre (tekrar)</label>
+                    <input id="regPass2" type="password" placeholder="password"/>
+                </div>
+            </div>
+            <div class="row">
+                <button class="btn" id="registerBtn">Kayıt Ol</button>
+            </div>
+            <pre id="regOut"></pre>
+        </div>
+    </div>
+
+    <div class="row" style="margin-top:12px">
+        <div class="card">
+            <h2>Endpoint Test Aracı</h2>
+            <div class="grid2">
+                <div>
+                    <label>Method</label>
+                    <select id="method">
+                        <option>GET</option>
+                        <option>POST</option>
+                        <option>PUT</option>
+                        <option>PATCH</option>
+                        <option>DELETE</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Path</label>
+                    <input id="path" placeholder="/api/ping veya /api/appointments"/>
+                </div>
+            </div>
+            <label>Headers (JSON)</label>
+            <textarea id="headers">{}</textarea>
+            <label>Body (JSON, GET için boş bırak)</label>
+            <textarea id="body"></textarea>
+            <div class="row">
+                <button class="btn primary" id="sendBtn">Gönder</button>
+                <button class="btn" id="copyCurl">cURL Kopyala</button>
+            </div>
+            <div class="hr"></div>
+            <div class="row">
+                <div class="card" style="flex:1">
+                    <h2>Request</h2>
+                    <pre id="reqOut"></pre>
+                </div>
+                <div class="card" style="flex:1">
+                    <h2>Response</h2>
+                    <pre id="resOut"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <p class="muted" style="margin-top:10px">
+        Not: Bu dosyayı direkt açıyorsun (file://). API farklı origin’deyse CORS açık olmalı. Aşağıya bak.
+    </p>
+</div>
+
+<script>
+    (function(){
+        const $ = sel => document.querySelector(sel);
+        const baseUrlInput = $('#baseUrl');
+        const tokenArea = $('#token');
+        const statusPill = $('#statusPill');
+        const pingResult = $('#pingResult');
+        const authOut = $('#authOut');
+        const regOut = $('#regOut');
+        const reqOut = $('#reqOut');
+        const resOut = $('#resOut');
+
+        const state = {
+            baseUrl: localStorage.getItem('baseUrl') || 'http://127.0.0.1:8000',
+            token: localStorage.getItem('token') || ''
+        };
+
+        function saveState(){
+            localStorage.setItem('baseUrl', state.baseUrl);
+            localStorage.setItem('token', state.token);
+            renderStatus();
+        }
+        function renderStatus(){
+            baseUrlInput.value = state.baseUrl;
+            tokenArea.value = state.token;
+            if(state.token){
+                statusPill.textContent = 'authenticated';
+                statusPill.style.background = '#10211b'; statusPill.style.borderColor='#1b3a31'; statusPill.style.color='#a7f3d0';
+            } else {
+                statusPill.textContent = 'unauthenticated';
+                statusPill.style.background = '#1a1212'; statusPill.style.borderColor='#3b1e1e'; statusPill.style.color='#fecaca';
+            }
+        }
+
+        async function doFetch(method, path, headers = {}, body = null){
+            const url = state.baseUrl.replace(/\/+$/,'') + path;
+            const h = Object.assign({'Content-Type':'application/json'}, headers);
+            if(state.token && !h['Authorization']){
+                h['Authorization'] = 'Bearer ' + state.token;
+            }
+            const opts = { method, headers: h };
+            if(body && method !== 'GET'){
+                opts.body = typeof body === 'string' ? body : JSON.stringify(body);
+            }
+            const t0 = performance.now();
+            let resp, text;
+            try{
+                resp = await fetch(url, opts);
+                text = await resp.text();
+            }catch(e){
+                resOut.textContent = 'Fetch error: ' + e.message + '\nMuhtemel CORS veya URL hatası.';
+                return { error: e };
+            }
+            const dt = Math.round(performance.now() - t0);
+            let json = null;
+            try{ json = JSON.parse(text); }catch{ /* plain text */ }
+            reqOut.textContent = JSON.stringify({url, method, headers:h, body: opts.body || null}, null, 2);
+            const meta = `[${resp.status}] ${resp.statusText} • ${dt} ms`;
+            resOut.textContent = (json ? JSON.stringify(json, null, 2) : text) + '\n\n' + meta;
+            return { resp, json, text, dt };
+        }
+
+        // Init
+        renderStatus();
+
+        // Buttons
+        $('#saveBase').onclick = () => {
+            state.baseUrl = baseUrlInput.value.trim() || state.baseUrl;
+            saveState();
+        };
+        $('#saveToken').onclick = () => { state.token = tokenArea.value.trim(); saveState(); };
+        $('#clearToken').onclick = () => { state.token = ''; saveState(); };
+
+        $('#pingBtn').onclick = async () => {
+            const r = await doFetch('GET','/api/ping');
+            pingResult.textContent = r?.resp ? `Ping: ${r.resp.status} (${r.dt} ms)` : 'Ping başarısız.';
+        };
+
+        // Login
+        $('#loginBtn').onclick = async () => {
+            const email = $('#loginEmail').value.trim();
+            const password = $('#loginPass').value;
+            if(!email || !password){ authOut.textContent = 'Email/şifre gerekli.'; return; }
+            const r = await doFetch('POST','/api/login', {}, JSON.stringify({
+                email, password, device_name: 'web-ui'
+            }));
+            if(r.json && r.json.token){
+                state.token = r.json.token; saveState();
+            }
+            authOut.textContent = JSON.stringify(r.json ?? r.text, null, 2);
+        };
+        $('#meBtn').onclick = async () => {
+            const r = await doFetch('GET','/api/me');
+            authOut.textContent = JSON.stringify(r.json ?? r.text, null, 2);
+        };
+        $('#logoutBtn').onclick = async () => {
+            const r = await doFetch('POST','/api/logout');
+            if(r.resp && r.resp.ok){ state.token = ''; saveState(); }
+            authOut.textContent = JSON.stringify(r.json ?? r.text, null, 2);
+        };
+
+        // Register
+        $('#registerBtn').onclick = async () => {
+            const name = $('#regName').value.trim();
+            const email = $('#regEmail').value.trim();
+            const password = $('#regPass').value;
+            const password_confirmation = $('#regPass2').value;
+            if(!name || !email || !password || !password_confirmation){
+                regOut.textContent = 'Tüm alanlar gerekli.'; return;
+            }
+            const r = await doFetch('POST','/api/register', {}, JSON.stringify({
+                name, email, password, password_confirmation
+            }));
+            regOut.textContent = JSON.stringify(r.json ?? r.text, null, 2);
+            // Eğer API register token döndürüyorsa yakala:
+            if(r.json && r.json.token){ state.token = r.json.token; saveState(); }
+        };
+
+        // Endpoint tester
+        $('#sendBtn').onclick = async () => {
+            const method = $('#method').value;
+            const path = $('#path').value.trim() || '/api/ping';
+            let headers = {}; let body = null;
+            try{ headers = JSON.parse($('#headers').value || '{}'); }catch{ headers = {}; }
+            const bodyText = $('#body').value.trim();
+            if(bodyText && method !== 'GET'){
+                try{ body = JSON.parse(bodyText); }catch{ body = bodyText; }
+            }
+            await doFetch(method, path, headers, body);
+        };
+
+        // Copy curl
+        $('#copyCurl').onclick = () => {
+            const method = $('#method').value;
+            const path = $('#path').value.trim() || '/api/ping';
+            let headers = {}; try{ headers = JSON.parse($('#headers').value || '{}'); }catch{}
+            const h = Object.assign({'Content-Type':'application/json'}, headers);
+            if(state.token && !h['Authorization']) h['Authorization'] = 'Bearer ' + state.token;
+            const url = state.baseUrl.replace(/\/+$/,'') + path;
+            const bodyText = $('#body').value.trim();
+            const parts = ['curl', '-X', method, JSON.stringify(url)];
+            Object.entries(h).forEach(([k,v]) => parts.push('-H', JSON.stringify(k+': '+v)));
+            if(bodyText && method !== 'GET') parts.push('--data', JSON.stringify(bodyText));
+            const cmd = parts.join(' ');
+            navigator.clipboard.writeText(cmd);
+            alert('cURL komutu panoya kopyalandı.');
+        };
+
+    })();
+</script>
+</body>
+</html>
